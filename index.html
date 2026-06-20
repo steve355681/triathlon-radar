@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainingPeaks 鐵人三項雷達</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; padding: 20px; min-height: 100vh; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .header-icon { width: 44px; height: 44px; background: linear-gradient(135deg, #e8431a, #ff6b35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .header-text h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+  .header-text p { font-size: 12px; color: #666; margin-top: 2px; }
+  .badge { margin-left: auto; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: white; border-radius: 12px; padding: 14px 16px; border: 1px solid #e8ecf0; }
+  .stat-label { font-size: 11px; color: #888; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .section-title { font-size: 14px; font-weight: 600; color: #444; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .video-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .video-card { background: white; border-radius: 12px; padding: 14px 16px; border: 1px solid #e8ecf0; display: flex; gap: 14px; align-items: flex-start; transition: box-shadow 0.15s; text-decoration: none; color: inherit; }
+  .video-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .video-num { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: linear-gradient(135deg, #e8431a, #ff6b35); color: white; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+  .video-body { flex: 1; }
+  .video-title { font-size: 14px; font-weight: 600; color: #1a1a2e; line-height: 1.4; }
+  .video-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag { font-size: 11px; font-weight: 500; border-radius: 6px; padding: 2px 8px; border: 1px solid; }
+  .tag-swim { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+  .tag-bike { background: #fff8e1; color: #e65100; border-color: #ffcc80; }
+  .tag-run { background: #fce4ec; color: #ad1457; border-color: #f48fb1; }
+  .tag-all { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
+  .tag-nutrition { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+  .tag-recovery { background: #e0f7fa; color: #00695c; border-color: #80cbc4; }
+  .tag-level { background: #f5f5f5; color: #555; border-color: #ddd; }
+  .tag-date { background: #fafafa; color: #888; border-color: #e0e0e0; }
+  .tag-type { background: #ede7f6; color: #4527a0; border-color: #b39ddb; }
+  .video-summary { font-size: 12px; color: #555; line-height: 1.6; margin-top: 8px; white-space: pre-line; }
+  .video-takeaway { margin-top: 10px; background: #f9f9fb; border-left: 3px solid #e8431a; border-radius: 0 6px 6px 0; padding: 8px 10px; }
+  .takeaway-label { font-size: 10px; font-weight: 700; color: #e8431a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .takeaway-item { font-size: 11px; color: #444; line-height: 1.5; padding: 2px 0 2px 14px; position: relative; }
+  .takeaway-item::before { content: '\2713'; position: absolute; left: 0; color: #e8431a; font-weight: 700; }
+  .video-link { font-size: 11px; color: #e8431a; font-weight: 500; margin-top: 6px; display: inline-block; }
+  .recommend-box { background: linear-gradient(135deg, #fff3ee, #fff8f5); border: 1px solid #ffd0bb; border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; }
+  .recommend-box .label { font-size: 11px; font-weight: 600; color: #e8431a; text-transform: uppercase; letter-spacing: 0.5px; }
+  .recommend-box p { font-size: 13px; color: #333; margin-top: 6px; line-height: 1.6; }
+  .bottom-note { text-align: center; font-size: 11px; color: #bbb; padding-top: 10px; }
+  .empty-state { background: white; border-radius: 12px; padding: 40px 20px; text-align: center; border: 1px dashed #ddd; color: #aaa; font-size: 14px; }
+  @media (max-width: 480px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-icon">🎯</div>
+  <div class="header-text">
+    <h1>TrainingPeaks 鐵人三項雷達</h1>
+    <p>每週五自動搜尋最新鐵人三項訓練資料，以 STAR 結構摘要呈現</p>
+  </div>
+  <div class="badge" id="update-badge">等待首次更新</div>
+</div>
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-label">本週資料</div><div class="stat-value" id="stat-count">—</div><div class="stat-sub">影片/文章/論文</div></div>
+  <div class="stat-card"><div class="stat-label">游泳訓練</div><div class="stat-value" id="stat-swim">—</div><div class="stat-sub">相關內容數</div></div>
+  <div class="stat-card"><div class="stat-label">騎車訓練</div><div class="stat-value" id="stat-bike">—</div><div class="stat-sub">相關內容數</div></div>
+  <div class="stat-card"><div class="stat-label">跑步訓練</div><div class="stat-value" id="stat-run">—</div><div class="stat-sub">相關內容數</div></div>
+</div>
+<div class="section-title"><span>📚</span> 本週精選內容</div>
+<div class="video-grid" id="video-grid">
+  <div class="empty-state"><div style="font-size:36px;margin-bottom:10px">⏳</div><div>排程於每週五晚上 8:00 自動更新</div></div>
+</div>
+<div id="recommend-section" style="display:none">
+  <div class="section-title"><span>⭐</span> 本週推薦重點</div>
+  <div class="recommend-box"><div class="label">訓練建議</div><p id="recommend-text"></p></div>
+</div>
+<div class="bottom-note" id="bottom-note">排程任務：每週五 20:00 · 資料來源：WebSearch 全網搜尋</div>
+<script>
+const DATA_PLACEHOLDER = null;
+function renderTagClass(t){const m={'游泳':'tag-swim','自行車':'tag-bike','跑步':'tag-run','綜合':'tag-all','營養':'tag-nutrition','恢復':'tag-recovery'};for(const k of Object.keys(m))if(t.includes(k))return m[k];return 'tag-all';}
+function render(data){
+  if(!data||!data.videos||!data.videos.length)return;
+  document.getElementById('update-badge').textContent='已更新 '+(data.updatedAt||'');
+  const v=data.videos;
+  document.getElementById('stat-count').textContent=v.length;
+  document.getElementById('stat-swim').textContent=v.filter(x=>x.focus&&x.focus.some(f=>f.includes('游泳'))).length;
+  document.getElementById('stat-bike').textContent=v.filter(x=>x.focus&&x.focus.some(f=>f.includes('自行車')||f.includes('騎車'))).length;
+  document.getElementById('stat-run').textContent=v.filter(x=>x.focus&&x.focus.some(f=>f.includes('跑步'))).length;
+  const grid=document.getElementById('video-grid');grid.innerHTML='';
+  v.forEach((item,i)=>{
+    const card=document.createElement('a');card.className='video-card';
+    if(item.url){card.href=item.url;card.target='_blank';}
+    const tags=(item.focus||[]).map(f=>`<span class="tag ${renderTagClass(f)}">${f}</span>`).join('');
+    const ta=item.takeaway&&item.takeaway.length?`<div class="video-takeaway"><div class="takeaway-label">✦ 本週行動建議</div>${item.takeaway.map(t=>`<div class="takeaway-item">${t}</div>`).join('')}</div>`:'';
+    card.innerHTML=`<div class="video-num">${i+1}</div><div class="video-body"><div class="video-title">${item.title||''}</div><div class="video-meta">${item.date?`<span class="tag tag-date">📅 ${item.date}</span>`:''}<span class="tag tag-type">${item.type||''}</span><span class="tag tag-level">${item.level||''}</span>${tags}</div><div class="video-summary">${item.summary||''}</div>${ta}${item.url?'<div class="video-link">▶ 查看原文 →</div>':''}</div>`;
+    grid.appendChild(card);
+  });
+  if(data.recommendation){document.getElementById('recommend-section').style.display='block';document.getElementById('recommend-text').textContent=data.recommendation;}
+  document.getElementById('bottom-note').textContent=`最後更新：${data.updatedAt||''} · 來源：WebSearch · 每週五 20:00 自動更新`;
+}
+if(DATA_PLACEHOLDER){render(DATA_PLACEHOLDER);}
+</script>
+</body>
+</html>
