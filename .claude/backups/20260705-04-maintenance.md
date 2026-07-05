@@ -11,7 +11,7 @@
 cp <原檔> .claude/backups/YYYYMMDD-<原檔名>
 ```
 
-例：`cp CLAUDE.md .claude/backups/20260705-CLAUDE.md`（日期用當天日期）。同一天改同一檔第二次，不用再備份。
+例：`cp CLAUDE.md .claude/backups/20260712-CLAUDE.md`。同一天改同一檔第二次，不用再備份。
 `.claude/memory/LESSONS.md` 的**追加**不用備份；**刪減或改寫**既有條目才要。
 
 ## §2 權限分級
