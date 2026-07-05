@@ -1,11 +1,12 @@
 # CLAUDE.md — triathlon-radar
 
 ## 這個專案是什麼
-單一產品檔案 `index.html`（繁體中文單頁儀表板）：鐵人三項訓練內容的每週雷達，呈現 STAR 結構摘要、訓練分類標籤、本週推薦。實際資料來源是 **WebSearch 全網搜尋**（文章/論文/影片）；meta 描述寫的「YouTube 頻道」是過時說法，勿以它為準（詳見 `.claude/guides/00-diagnosis.md` D1）。使用者是 Steve（繁體中文使用者、鐵人三項訓練者）。repo 裡沒有 build 系統、沒有測試框架——驗證方式是直接開啟或 render 這個 HTML。檔案目前已知處於損壞狀態，動它之前先讀 `00-diagnosis.md` D2。
+單一產品檔案 `index.html`（繁體中文單頁儀表板）：鐵人三項訓練內容的每週雷達，呈現 STAR 結構摘要、訓練分類標籤、本週推薦。資料來源是 **WebSearch 全網搜尋**（文章/論文/影片）。使用者是 Steve（繁體中文使用者、鐵人三項訓練者）。repo 裡沒有 build 系統、沒有測試框架——驗證方式是 headless Chromium render 這個 HTML（`/opt/pw-browsers/chromium --headless --no-sandbox --dump-dom file://…`）。
+檔案是資料驅動結構：**每週更新＝一次 `Edit` 把 `const DATA_PLACEHOLDER = {…};` 整段換成新資料**，其餘部分（CSS、render 邏輯）不需要碰。
 
 ## 硬規則（違反即算任務失敗）
 1. 回覆與 UI 文案一律繁體中文（程式碼、commit message 用英文可以）。
-2. `index.html` 禁止用 `Write` 全檔覆寫。只用 `Edit`，`old_string` 錨點必須含該處獨有文字（如影片標題）。讀檔先 `Grep` 定位，再用 `Read` 的 offset/limit 讀區段。
+2. `index.html` 禁止用 `Write` 全檔覆寫。只用 `Edit`，`old_string` 錨點必須含該處獨有文字。讀檔先 `Grep` 定位，再用 `Read` 的 offset/limit 讀區段。（唯一例外：修復已損壞的檔案，規範見 `guides/05-letter-to-future-sessions.md` §2。）
 3. 只在 harness 指定的 `claude/*` 分支開發與 push，不直接碰 `main`。
 4. 不修改 `~/.claude/` 下的 hooks 與 launcher 設定（平台管理）。
 5. 修改 `.claude/guides/` 或本檔前，先複製一份到 `.claude/backups/`（命名規則見 guides/04-maintenance.md）。
@@ -26,5 +27,5 @@
 ## 環境速查
 - **MCP**：GitHub（用 `mcp__github__*`，本環境沒有 `gh` CLI）、Strava、Google Calendar、Spotify、Claude Code Remote（trigger 排程）。
 - **工具載入**：`ToolSearch` 優先用 `select:確切工具名`；GitHub 呼叫帶 `minimal_output: true`、每頁 5–10 筆。
-- **排程現況**：2026-07-05 確認 `list_triggers` 為空——「每週五自動更新」尚未實作。實作方案與現成 prompt 見 `guides/05-letter-to-future-sessions.md` §1。
+- **排程現況**：每週自動更新已於 2026-07-05 建立（trigger `trig_01K6j1UtHCWKPitUDVxABw6U`，cron `0 12 * * 5` UTC＝台灣週五 20:00，fresh-session 模式）。內容見 `guides/05-letter-to-future-sessions.md` §1。
 - **subagent 模型**：Agent 工具的 `model` 參數可選 `sonnet` / `opus` / `haiku` / `fable`（2026-07-05 確認）。沒有 per-call effort 參數，詳見 `guides/01-delegation.md`。

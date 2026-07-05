@@ -5,9 +5,10 @@
 
 ## §1 第一件事：把「每週五自動更新」變成真的
 
-頁面宣稱的自動更新不存在（`list_triggers` 為空）。這是本環境價值最高的未完成工程。
+> **已完成 2026-07-05**：trigger `trig_01K6j1UtHCWKPitUDVxABw6U` 已建立（cron `0 12 * * 5`，伺服器 UTC＝台灣週五 20:00，fresh-session 模式，實際使用的 prompt 即下方範本）。meta 描述已同步修正為 WebSearch。以下保留設計說明：若 trigger 需要重建或調整，照此做。
+
 **前置條件：先完成 §2 的檔案修復**——在損壞的檔案上跑排程只會疊加損壞。
-**資料來源以頁面實際文案為準（WebSearch 全網搜尋，見 `00-diagnosis.md` D1）**，不是 meta 描述寫的 YouTube；建 trigger 前跟使用者確認他要哪一種，並順手把 meta 描述改成與事實一致。
+**資料來源以頁面實際文案為準（WebSearch 全網搜尋，見 `00-diagnosis.md` D1）**。
 
 用 `mcp__Claude_Code_Remote__create_trigger`，參數：
 - `name`: `weekly-triathlon-radar-update`
@@ -32,7 +33,9 @@ Fallback 規則（無人值守，問不到人時一律適用）：
 
 ## §2 第二件事：修復並重構 index.html（根治診斷 D2）
 
-**檔案目前是損壞的**（證據見 `00-diagnosis.md` D2）：裡面黏了兩份文件——第一份是舊的靜態版（1–227 行），第二份是資料驅動版（229–329 行，含最新資料 updatedAt 2026-06-20），但第二份整段被吞在第 228 行未閉合的 `<script>` 裡，不會被渲染。
+> **已完成 2026-07-05**：損壞現場備份於 `.claude/backups/20260705-index-corrupted.html`；重建後的檔案 109 行、單一 DOCTYPE、資料驅動（`DATA_PLACEHOLDER` 一個區塊），headless Chromium 實測 render 出 5 張卡片，下方 5 條驗收全部通過。以下保留原始任務描述，供未來再次損壞時參考。
+
+**當時檔案是損壞的**（證據見 `00-diagnosis.md` D2）：裡面黏了兩份文件——第一份是舊的靜態版（1–227 行），第二份是資料驅動版（229–329 行，含最新資料 updatedAt 2026-06-20），但第二份整段被吞在第 228 行未閉合的 `<script>` 裡，不會被渲染。
 
 **修復（先做）**：保留資料驅動版（較新、且與頁面文案「WebSearch／每週五 20:00」一致），重建為單一合法 HTML 文件。開頭的 `cowork-artifact-meta` JSON 區塊（第 1–7 行）必須保留。這是修復損壞而非日常編輯，屬於 CLAUDE.md 硬規則 2「禁止 Write 全檔覆寫」的唯一例外情境——重建前先 `cp index.html .claude/backups/20260705-index-corrupted.html` 留下損壞現場。
 
@@ -72,6 +75,7 @@ Fallback 規則（無人值守，問不到人時一律適用）：
 
 這套檔案只存在於本 repo；本雲端環境的 `~/.claude/` 每次 session 都是新容器，寫在那裡不持久。新 repo 要用這套制度，照以下步驟移植（Sonnet 等級即可執行，約 10 分鐘）：
 
+0. 若你的 session 開在新 repo、看不到本 repo 的檔案：用 `mcp__Claude_Code_Remote__add_repo`（owner: `steve355681`, repo: `triathlon-radar`）把本 repo 加進 session 並照回傳指示 clone，即可讀到要複製的檔案。使用者只需要在新 repo 的 session 說一句「照 triathlon-radar 的制度移植」。
 1. 複製通用檔到新 repo 同樣路徑：`.claude/guides/01-delegation.md`、`02-judgment.md`、`03-prompt-templates.md`、`04-maintenance.md`——這四份與專案無關，原樣照搬。
 2. **不要照搬**：`00-diagnosis.md`（診斷的是本 repo 的問題）、本檔（`05-…`）、`LESSONS.md`（教訓大多綁定本專案）。新 repo 各自重建：診斷用新 repo 的實況重寫；`LESSONS.md` 從空檔開始，只搬「環境事實」類條目（例如 Agent 工具沒有 effort 參數這種跨 repo 皆真的事）。
 3. 新寫該 repo 的 CLAUDE.md：沿用本 repo CLAUDE.md 的骨架（專案是什麼／硬規則／路由表／環境速查），但「專案是什麼」與「硬規則」必須換成新 repo 的實況——硬規則抄錯專案比沒有硬規則更糟。
