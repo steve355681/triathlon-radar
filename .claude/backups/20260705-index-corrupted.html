@@ -1,0 +1,331 @@
+<!DOCTYPE html><script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Trainingpeaks Triathlon Radar",
+  "schemaVersion": 1,
+  "description": "每週五自動從 TrainingPeaks YouTube 頻道擷取鐵人三項訓練影片，以 Dashboard 呈現影片摘要、訓練分類標籤與本週推薦重點。"
+}
+</script>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainingPeaks 鐵人三項雷達</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    color: #1a1a2e;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #e8431a, #ff6b35);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .header-text h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+  .header-text p { font-size: 12px; color: #666; margin-top: 2px; }
+  .badge {
+    margin-left: auto;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #e8ecf0;
+  }
+  .stat-label { font-size: 11px; color: #888; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .section-title {
+    font-size: 14px; font-weight: 600; color: #444;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-title span { font-size: 16px; }
+  .video-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .video-card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #e8ecf0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: box-shadow 0.15s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .video-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .video-num {
+    width: 32px; height: 32px; min-width: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8431a, #ff6b35);
+    color: white;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+  }
+  .video-body { flex: 1; }
+  .video-title { font-size: 14px; font-weight: 600; color: #1a1a2e; line-height: 1.4; }
+  .video-meta {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 6px;
+  }
+  .tag {
+    font-size: 11px; font-weight: 500;
+    border-radius: 6px;
+    padding: 2px 8px;
+    border: 1px solid;
+  }
+  .tag-swim  { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+  .tag-bike  { background: #fff8e1; color: #e65100; border-color: #ffcc80; }
+  .tag-run   { background: #fce4ec; color: #ad1457; border-color: #f48fb1; }
+  .tag-all   { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
+  .tag-nutrition { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+  .tag-recovery  { background: #e0f7fa; color: #00695c; border-color: #80cbc4; }
+  .tag-level { background: #f5f5f5; color: #555; border-color: #ddd; }
+  .tag-date  { background: #fafafa; color: #888; border-color: #e0e0e0; }
+  .tag-type  { background: #ede7f6; color: #4527a0; border-color: #b39ddb; }
+  .video-summary {
+    font-size: 12px; color: #555; line-height: 1.6;
+    margin-top: 8px;
+  }
+  .video-takeaway {
+    margin-top: 10px;
+    background: #f9f9fb;
+    border-left: 3px solid #e8431a;
+    border-radius: 0 6px 6px 0;
+    padding: 8px 10px;
+  }
+  .takeaway-label {
+    font-size: 10px; font-weight: 700; color: #e8431a;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 5px;
+  }
+  .takeaway-item {
+    font-size: 11px; color: #444; line-height: 1.5;
+    padding: 2px 0 2px 14px;
+    position: relative;
+  }
+  .takeaway-item::before {
+    content: '\2713';
+    position: absolute; left: 0;
+    color: #e8431a; font-weight: 700;
+  }
+  .video-link {
+    font-size: 11px; color: #e8431a; font-weight: 500;
+    margin-top: 6px; display: inline-block;
+  }
+  .recommend-box {
+    background: linear-gradient(135deg, #fff3ee, #fff8f5);
+    border: 1px solid #ffd0bb;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .recommend-box .label { font-size: 11px; font-weight: 600; color: #e8431a; text-transform: uppercase; letter-spacing: 0.5px; }
+  .recommend-box p { font-size: 13px; color: #333; margin-top: 6px; line-height: 1.6; }
+  .bottom-note {
+    text-align: center; font-size: 11px; color: #bbb;
+    padding-top: 10px;
+  }
+  .empty-state {
+    background: white;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    border: 1px dashed #ddd;
+    color: #aaa;
+    font-size: 14px;
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">&#127919;</div>
+  <div class="header-text">
+    <h1>TrainingPeaks &#40784;&#20154;&#19977;&#39636;&#38675;&#36948;</h1>
+    <p>&#27599;&#36031;&#20116;&#33258;&#21205;&#25628;&#23582;&#26368;&#26032;&#40784;&#20154;&#19977;&#39636;&#35013;&#32884;&#36039;&#26009;&#65292;&#20197; STAR &#32080;&#27083;&#25688;&#35201;&#21呈&#29694;</p>
+  </div>
+  <div class="badge" id="update-badge">&#31561;&#24453;&#39318;&#27425;&#26356;&#26032;</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">&#26412;&#36031;&#36039;&#26009;</div>
+    <div class="stat-value" id="stat-count">&#8212;</div>
+    <div class="stat-sub">&#24433;&#29255;/&#25991;&#31456;/&#35542;&#25991;</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">&#28183;&#27861;&#35013;&#32884;</div>
+    <div class="stat-value" id="stat-swim">&#8212;</div>
+    <div class="stat-sub">&#30456;&#38364;&#20839;&#23481;&#25976;</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">&#39130;&#36655;&#35013;&#32884;</div>
+    <div class="stat-value" id="stat-bike">&#8212;</div>
+    <div class="stat-sub">&#30456;&#38364;&#20839;&#23481;&#25976;</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">&#36305;&#27493;&#35013;&#32884;</div>
+    <div class="stat-value" id="stat-run">&#8212;</div>
+    <div class="stat-sub">&#30456;&#38364;&#20839;&#23481;&#25976;</div>
+  </div>
+</div>
+
+<div class="section-title"><span>&#128218;</span> &#26412;&#36031;&#31295;&#36984;&#20839;&#23481;</div>
+<div class="video-grid" id="video-grid">
+  <div class="empty-state">
+    <div class="icon">&#9203;</div>
+    <div>&#25490;&#31243;&#26044;&#27599;&#36031;&#20116;&#26202;&#19978; 8:00 &#33258;&#21205;&#26356;&#26032;</div>
+    <div style="margin-top:6px;font-size:12px;">&#39318;&#27425;&#26356;&#26032;&#24460;&#65292;&#25688;&#35201;&#23558;&#39023;&#31034;&#26044;&#27492;</div>
+  </div>
+</div>
+
+<div id="recommend-section" style="display:none">
+  <div class="section-title"><span>&#11088;</span> &#26412;&#36031;&#25512;&#34658;&#37325;&#40635;</div>
+  <div class="recommend-box">
+    <div class="label">&#35013;&#32884;&#24314;&#35611;</div>
+    <p id="recommend-text"></p>
+  </div>
+</div>
+
+<div class="bottom-note" id="bottom-note">&#25490;&#31243;&#20219;&#21153;&#65306;&#27599;&#36031;&#20116; 20:00 &middot; &#36039;&#26009;&#20358;&#28304;&#65306;WebSearch &#20840;&#32178;&#25628;&#23582;</div>
+
+<script>
+const DATA_PLACEHOLDER = {"updatedAt":"2026-06-20","recommendation":"本週五筆資料的核心洞察有三：第一，磚塊訓練（Brick Workout）是提升騎轉跑表現最直接的方法——每週至少安排一次騎車後接跑步，讓神經肌肉系統熟悉過渡，賽日才能維持流暢節奏。第二，跑步段是鐵人三項總成績的最大差異來源——研究顯示跑步成績與完賽時間相關係數最高（r>0.85），建議本週將跑步訓練重心放在有氧基礎累積與配速穩定性。第三，恢復是訓練效果的倍增器——訓練後30分鐘內補充碳水化合物與蛋白質（3:1比例）、搭配泡沫滾筒放鬆，是維持高品質訓練週期的基礎。","videos":[{"title":"Brick Workouts Complete Guide 2026: Master Bike-to-Run Transitions","date":"2026-06-01","url":"https://runbikecalc.com/blog/brick-workouts-complete-guide-2026","type":"文章","level":"中階","focus":["自行車","跑步"],"summary":"<strong>Situation（背景）</strong>：鐵人三項最具挑戰性的環節之一是自行車轉跑步的過渡段（T2），許多選手因缺乏系統性練習，下車後雙腿沉重、步伐混亂，嚴重影響跑步段表現。<br><br><strong>Task（目標）</strong>：指導選手透過科學化的磚塊訓練（Brick Workout）課表，建立騎後即跑的神經肌肉記憶，縮短過渡適應時間並提升跑步段效率。<br><br><strong>Action（方法）</strong>：課表採循序漸進設計：初期以60分鐘騎車接15分鐘跑步為基礎組合，轉換時間控制在2分鐘以內；中期引入騎車末段10分鐘拉高踏頻以預熱快肌纖維，再立即銜接跑步；同時建議搭配比賽補給流程測試，讓腸胃適應邊運動邊攝取能量膠。<br><br><strong>Result（結果）</strong>：持續8週磚塊訓練後，選手在T2至跑步穩定配速所需時間平均縮短，腿部沉重感明顯降低，整體跑步段失速率顯著改善，賽日過渡段表現更穩定流暢。","takeaway":["本週末長騎結束後立即加入15分鐘慢跑，不休息直接換跑鞋出發，體驗並記錄雙腿沉重感的消散過程。","騎車最後10分鐘將踏頻提升至95-100rpm（輕踩），預熱快肌纖維後再接跑步，觀察轉換適應是否加快。","訓練時帶上比賽計劃使用的能量膠，在磚塊跑中途補充，確認騎轉跑狀態下腸胃能正常吸收。"]},{"title":"Triathlon Running Workouts Training: Tips and Tricks for Better Performance (2026)","date":"2026-06-15","url":"https://alltriathlon.com/triathlon-running-workouts-training/","type":"文章","level":"初學者","focus":["跑步"],"summary":"<strong>Situation（背景）</strong>：鐵人三項的跑步段是在游泳與騎車耗盡部分體能後完成，與純跑步訓練有本質差異；許多選手發現訓練時的跑步成績無法有效轉換到比賽跑步段，感到困惑。<br><br><strong>Task（目標）</strong>：提供專為鐵人三項設計的跑步訓練課表與策略，著重在疲勞狀態下維持跑步效率、建立有氧基礎，以及提升比賽跑步段的配速穩定性。<br><br><strong>Action（方法）</strong>：每週安排2-3次跑步訓練：輕鬆有氧跑（Zone 2，60分鐘，建立有氧引擎）、節奏跑（Zone 3-4，20-30分鐘，提升乳酸閾值），以及磚塊跑（騎車後立即跑步10-20分鐘，模擬比賽疲勞感）。強調80%訓練量維持低強度，避免每次跑步都全力以赴導致累積疲勞。<br><br><strong>Result（結果）</strong>：採用此訓練架構8週後，選手在鐵人三項跑步段的配速崩壞率降低，比賽後10公里最後3公里維持速度的能力顯著改善，整體完賽時間提升，尤其對初學者效果最為明顯。","takeaway":["本週安排一次60分鐘Zone 2輕鬆跑，全程心率維持在最大心率的65-75%，不追求速度只累積有氧基礎。","加入一次20分鐘節奏跑（感覺「努力但可維持說話」），結束後記錄平均配速作為下週進步基準。","在週末長騎後進行10分鐘慢跑，刻意記錄雙腿適應所需時間，為後續磚塊訓練強度調整提供依據。"]},{"title":"Triathlon Recovery: Tips for a Speedy and Effective Post-Race Recovery (2026)","date":"2026-06-10","url":"https://alltriathlon.com/triathlon-recovery/","type":"文章","level":"中階","focus":["恢復","營養"],"summary":"<strong>Situation（背景）</strong>：鐵人三項選手在密集訓練與比賽週期中，常見問題是恢復品質不佳導致慢性疲勞累積，影響下一訓練週期的表現，甚至增加受傷風險。<br><br><strong>Task（目標）</strong>：提供有科學依據的賽後與訓練後恢復策略，包含營養補充時機、物理放鬆技術與睡眠優化，協助選手在最短時間內達到最佳恢復效益。<br><br><strong>Action（方法）</strong>：運動結束30分鐘內補充碳水化合物1.0–1.2g/kg搭配蛋白質（3:1比例）；電解質以鈉、鉀為主（香蕉、運動飲料）；物理恢復包括泡沫滾筒放鬆20分鐘、冷熱水交替沖浴；睡眠建議每晚7-9小時，訓練後3小時內避免就寢以確保恢復效率。長期監控早晨靜止心率，若連續3天偏高則延長恢復期。<br><br><strong>Result（結果）</strong>：採用系統性恢復流程的選手肌肉酸痛持續時間平均縮短1-2天，下一訓練週期的自覺費力程度（RPE）顯著降低，長期維持高訓練品質的能力明顯提升。","takeaway":["每次訓練後30分鐘內準備恢復餐：香蕉+希臘優格（或牛奶+燕麥），提供3:1碳水化合物與蛋白質比例。","每週長距離訓練後安排20分鐘泡沫滾筒放鬆，重點放在大腿前後側、小腿與髂脛束，降低隔日肌肉僵硬。","每天早晨起床前測量靜止心率，若比平常高出5-7下，當天改以輕鬆活動或完全休息取代原定訓練。"]},{"title":"The Ultimate Ironman Training Regimen: A Comprehensive 2026 Guide","date":"2026-06-05","url":"https://besttriathletes.com/ironman-training-regimen-guide/","type":"文章","level":"進階","focus":["游泳","自行車","跑步","綜合"],"summary":"<strong>Situation（背景）</strong>：全程鐵人（226km）對人體生理需求遠超一般耐力賽事，許多挑戰鐵人的選手缺乏系統化年度訓練架構，訓練量堆疊不當導致受傷或賽日提前撞牆。<br><br><strong>Task（目標）</strong>：提供完整的鐵人全年備賽架構，涵蓋不同備賽階段的訓練量、強度分配及週期化設計，協助選手以最有效率的方式準備賽事。<br><br><strong>Action（方法）</strong>：採「3-3-3」訓練框架（每週3游、3騎、3跑）搭配漸進式週期化：基礎期（賽前20週以上）以有氧基礎累積為主，長騎120分鐘、長跑90分鐘；備賽期（12-8週前）長騎延伸至4小時、長跑2.5小時，每兩週安排完整磚塊訓練日；減量期（賽前3週）訓練量縮減40%，維持強度刺激但充分超量恢復。<br><br><strong>Result（結果）</strong>：遵循此架構的選手完賽率顯著提升，系統備賽組的跑步段配速穩定性優於非系統訓練組，賽後恢復時間也較短，整體賽日體驗更從容。","takeaway":["對照「3-3-3」框架檢視本週訓練計劃，確認是否包含3次游泳、3次騎車、3次跑步，補足缺漏項目。","若目前處於基礎期，確保長騎控制在有氧區間（心率Zone 2），不要因騎伴追速而拉高強度破壞訓練目的。","在訓練日曆中標記下一個長距離磚塊日（長騎4小時接跑30分鐘），提前安排補給與後勤準備。"]},{"title":"Performance Analysis of Individual Disciplines in Relation to Overall Race Time in Elite Olympic-Distance Triathlon","date":"2026-02-01","url":"https://www.hsr-journal.com/index.php/journal/article/view/1343","type":"論文","level":"進階","focus":["綜合"],"summary":"<strong>Situation（背景）</strong>：奧運標準距離鐵人三項的頂尖競技分析中，教練與選手難以判斷哪個單項訓練對整體完賽時間影響最大，訓練資源分配缺乏科學依據。<br><br><strong>Task（目標）</strong>：分析2018-2022年ITU比賽數據，確定游泳、自行車、跑步三項成績與整體完賽時間的相關強度，為訓練優先順序提供實證指引。<br><br><strong>Action（方法）</strong>：蒐集多屆ITU世界盃及世錦賽精英選手成績數據，運用皮爾森相關係數與多元迴歸分析，比較三項成績分別對總成績的預測能力，並依性別分組進行交叉驗證。<br><br><strong>Result（結果）</strong>：跑步段成績與總成績相關係數最高（r>0.85），其次為自行車（r≈0.75），游泳段最低（r≈0.60）。結論建議精英選手優先強化跑步；業餘選手因游泳技術差異大，仍需針對性提升游泳效率以在起跑段節省體力用於後段。","takeaway":["本週安排一次計時跑（5公里全力），記錄成績作為當前跑步基線，追蹤未來8週的進步幅度。","騎車訓練結束後分析平均功率數據（若有功率計），確認是否在目標FTP的65-75%區間穩定輸出。","若游泳技術仍有明顯缺陷（划水數過多或打水費力），優先本週請教練錄影分析動作，技術改善報酬率高於增加訓練量。"]}]};<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrainingPeaks 鐵人三項雷達</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1a2e; padding: 20px; min-height: 100vh; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .header-icon { width: 44px; height: 44px; background: linear-gradient(135deg, #e8431a, #ff6b35); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .header-text h1 { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+  .header-text p { font-size: 12px; color: #666; margin-top: 2px; }
+  .badge { margin-left: auto; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: white; border-radius: 12px; padding: 14px 16px; border: 1px solid #e8ecf0; }
+  .stat-label { font-size: 11px; color: #888; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .section-title { font-size: 14px; font-weight: 600; color: #444; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .video-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .video-card { background: white; border-radius: 12px; padding: 14px 16px; border: 1px solid #e8ecf0; display: flex; gap: 14px; align-items: flex-start; transition: box-shadow 0.15s; text-decoration: none; color: inherit; }
+  .video-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .video-num { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: linear-gradient(135deg, #e8431a, #ff6b35); color: white; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+  .video-body { flex: 1; }
+  .video-title { font-size: 14px; font-weight: 600; color: #1a1a2e; line-height: 1.4; }
+  .video-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag { font-size: 11px; font-weight: 500; border-radius: 6px; padding: 2px 8px; border: 1px solid; }
+  .tag-swim { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+  .tag-bike { background: #fff8e1; color: #e65100; border-color: #ffcc80; }
+  .tag-run { background: #fce4ec; color: #ad1457; border-color: #f48fb1; }
+  .tag-all { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
+  .tag-nutrition { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+  .tag-recovery { background: #e0f7fa; color: #00695c; border-color: #80cbc4; }
+  .tag-level { background: #f5f5f5; color: #555; border-color: #ddd; }
+  .tag-date { background: #fafafa; color: #888; border-color: #e0e0e0; }
+  .tag-type { background: #ede7f6; color: #4527a0; border-color: #b39ddb; }
+  .video-summary { font-size: 12px; color: #555; line-height: 1.6; margin-top: 8px; white-space: pre-line; }
+  .video-takeaway { margin-top: 10px; background: #f9f9fb; border-left: 3px solid #e8431a; border-radius: 0 6px 6px 0; padding: 8px 10px; }
+  .takeaway-label { font-size: 10px; font-weight: 700; color: #e8431a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .takeaway-item { font-size: 11px; color: #444; line-height: 1.5; padding: 2px 0 2px 14px; position: relative; }
+  .takeaway-item::before { content: '\2713'; position: absolute; left: 0; color: #e8431a; font-weight: 700; }
+  .video-link { font-size: 11px; color: #e8431a; font-weight: 500; margin-top: 6px; display: inline-block; }
+  .recommend-box { background: linear-gradient(135deg, #fff3ee, #fff8f5); border: 1px solid #ffd0bb; border-radius: 12px; padding: 14px 16px; margin-bottom: 20px; }
+  .recommend-box .label { font-size: 11px; font-weight: 600; color: #e8431a; text-transform: uppercase; letter-spacing: 0.5px; }
+  .recommend-box p { font-size: 13px; color: #333; margin-top: 6px; line-height: 1.6; }
+  .bottom-note { text-align: center; font-size: 11px; color: #bbb; padding-top: 10px; }
+  .empty-state { background: white; border-radius: 12px; padding: 40px 20px; text-align: center; border: 1px dashed #ddd; color: #aaa; font-size: 14px; }
+  @media (max-width: 480px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-icon">🎯</div>
+  <div class="header-text">
+    <h1>TrainingPeaks 鐵人三項雷達</h1>
+    <p>每週五自動搜尋最新鐵人三項訓練資料，以 STAR 結構摘要呈現</p>
+  </div>
+  <div class="badge" id="update-badge">等待首次更新</div>
+</div>
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-label">本週資料</div><div class="stat-value" id="stat-count">—</div><div class="stat-sub">影片/文章/論文</div></div>
+  <div class="stat-card"><div class="stat-label">游泳訓練</div><div class="stat-value" id="stat-swim">—</div><div class="stat-sub">相關內容數</div></div>
+  <div class="stat-card"><div class="stat-label">騎車訓練</div><div class="stat-value" id="stat-bike">—</div><div class="stat-sub">相關內容數</div></div>
+  <div class="stat-card"><div class="stat-label">跑步訓練</div><div class="stat-value" id="stat-run">—</div><div class="stat-sub">相關內容數</div></div>
+</div>
+<div class="section-title"><span>📚</span> 本週精選內容</div>
+<div class="video-grid" id="video-grid">
+  <div class="empty-state"><div style="font-size:36px;margin-bottom:10px">⏳</div><div>排程於每週五晚上 8:00 自動更新</div></div>
+</div>
+<div id="recommend-section" style="display:none">
+  <div class="section-title"><span>⭐</span> 本週推薦重點</div>
+  <div class="recommend-box"><div class="label">訓練建議</div><p id="recommend-text"></p></div>
+</div>
+<div class="bottom-note" id="bottom-note">排程任務：每週五 20:00 · 資料來源：WebSearch 全網搜尋</div>
+<script>
+const DATA_PLACEHOLDER = null;
+function renderTagClass(t){const m={'游泳':'tag-swim','自行車':'tag-bike','跑步':'tag-run','綜合':'tag-all','營養':'tag-nutrition','恢復':'tag-recovery'};for(const k of Object.keys(m))if(t.includes(k))return m[k];return 'tag-all';}
+function render(data){
+  if(!data||!data.videos||!data.videos.length)return;
+  document.getElementById('update-badge').textContent='已更新 '+(data.updatedAt||'');
+  const v=data.videos;
+  document.getElementById('stat-count').textContent=v.length;
+  document.getElementById('stat-swim').textContent=v.filter(x=>x.focus&&x.focus.some(f=>f.includes('游泳'))).length;
+  document.getElementById('stat-bike').textContent=v.filter(x=>x.focus&&x.focus.some(f=>f.includes('自行車')||f.includes('騎車'))).length;
+  document.getElementById('stat-run').textContent=v.filter(x=>x.focus&&x.focus.some(f=>f.includes('跑步'))).length;
+  const grid=document.getElementById('video-grid');grid.innerHTML='';
+  v.forEach((item,i)=>{
+    const card=document.createElement('a');card.className='video-card';
+    if(item.url){card.href=item.url;card.target='_blank';}
+    const tags=(item.focus||[]).map(f=>`<span class="tag ${renderTagClass(f)}">${f}</span>`).join('');
+    const ta=item.takeaway&&item.takeaway.length?`<div class="video-takeaway"><div class="takeaway-label">✦ 本週行動建議</div>${item.takeaway.map(t=>`<div class="takeaway-item">${t}</div>`).join('')}</div>`:'';
+    card.innerHTML=`<div class="video-num">${i+1}</div><div class="video-body"><div class="video-title">${item.title||''}</div><div class="video-meta">${item.date?`<span class="tag tag-date">📅 ${item.date}</span>`:''}<span class="tag tag-type">${item.type||''}</span><span class="tag tag-level">${item.level||''}</span>${tags}</div><div class="video-summary">${item.summary||''}</div>${ta}${item.url?'<div class="video-link">▶ 查看原文 →</div>':''}</div>`;
+    grid.appendChild(card);
+  });
+  if(data.recommendation){document.getElementById('recommend-section').style.display='block';document.getElementById('recommend-text').textContent=data.recommendation;}
+  document.getElementById('bottom-note').textContent=`最後更新：${data.updatedAt||''} · 來源：WebSearch · 每週五 20:00 自動更新`;
+}
+if(DATA_PLACEHOLDER){render(DATA_PLACEHOLDER);}
+</script>
+</body>
+</html>
