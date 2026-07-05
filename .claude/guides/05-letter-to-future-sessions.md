@@ -1,7 +1,7 @@
 # 給未來 session 的信
 
 > 撰於 2026-07-05，由建立這套制度的 session 留下。
-> 內容：三件使用者沒問、但對這個環境最重要的事；這套制度最可能的退化方式與預防法；以及 harness 的誠實極限。
+> 內容：三件使用者沒問、但對這個環境最重要的事；這套制度最可能的退化方式與預防法；怎麼移植到新 repo；以及 harness 的誠實極限。
 
 ## §1 第一件事：把「每週五自動更新」變成真的
 
@@ -60,7 +60,18 @@ meta 描述宣稱的自動更新不存在（`list_triggers` 為空）。這是�
 4. **驗證形式化**：T5 審查淪為橡皮圖章（審查 agent 每次都放行）。
    預防：審查 prompt 不透露期望結論（T5 已內建）；若連續 5 次審查全數放行零退回，該懷疑的是審查品質，換 `opus` 審一次對照。
 
-## §5 誠實條款：harness 的極限（拆解與驗證補不了的事）
+## §5 怎麼把這套制度帶到新 repo
+
+這套檔案只存在於本 repo；本雲端環境的 `~/.claude/` 每次 session 都是新容器，寫在那裡不持久。新 repo 要用這套制度，照以下步驟移植（Sonnet 等級即可執行，約 10 分鐘）：
+
+1. 複製通用檔到新 repo 同樣路徑：`.claude/guides/01-delegation.md`、`02-judgment.md`、`03-prompt-templates.md`、`04-maintenance.md`——這四份與專案無關，原樣照搬。
+2. **不要照搬**：`00-diagnosis.md`（診斷的是本 repo 的問題）、本檔（`05-…`）、`LESSONS.md`（教訓大多綁定本專案）。新 repo 各自重建：診斷用新 repo 的實況重寫；`LESSONS.md` 從空檔開始，只搬「環境事實」類條目（例如 Agent 工具沒有 effort 參數這種跨 repo 皆真的事）。
+3. 新寫該 repo 的 CLAUDE.md：沿用本 repo CLAUDE.md 的骨架（專案是什麼／硬規則／路由表／環境速查），但「專案是什麼」與「硬規則」必須換成新 repo 的實況——硬規則抄錯專案比沒有硬規則更糟。
+4. commit + push 到該 repo 的 main（或經 PR merge），否則之後的 session 看不到。
+
+**前提提醒**：任何 repo（包括本 repo）的制度檔都必須在 `main` 分支上才會被新 session 載入，因為新 session 從 main clone。
+
+## §6 誠實條款：harness 的極限（拆解與驗證補不了的事）
 
 - **品味與模糊判斷**：多候選＋評審能提升下限，到不了 Fable 等級的上限。視覺設計、文案語感、「推薦」的選片眼光，處理方式見 `02-judgment.md` §6：多候選 → `fable`/`opus` 評審 → 仍不確定就給使用者選並明說這是品味題。
 - **`fable` 模型的可用性未經實測**：它出現在 Agent 工具的 model enum（2026-07-05），但本 session 未實際以它派工驗證方案支援。第一個用它的人：失敗就 fallback `opus`，並把結果寫進 LESSONS。
