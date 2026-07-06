@@ -4,7 +4,7 @@
 > 其他規則檔引用本檔時，用編號 D1 / D2 / D3。
 > 若你發現本檔描述與現實不符（例如檔案結構已改變），依 `04-maintenance.md` 的規則更新本檔。
 
-> **狀態更新 2026-07-05**：D1 的排程缺口與 D2 的檔案損壞已於同日修復——CLAUDE.md 與 LESSONS 已建立、每週 trigger 已建立（`trig_01K6j1UtHCWKPitUDVxABw6U`）、index.html 已重建為單一資料驅動文件（損壞現場備份在 `.claude/backups/20260705-index-corrupted.html`）。以下保留原始診斷供理解背景；「修法」中的規則仍然有效。
+> **狀態更新 2026-07-05**：D1 的排程缺口與 D2 的檔案損壞已於同日修復——CLAUDE.md 與 LESSONS 已建立、每週 trigger 已建立（`trig_01ErnJ4TnKhxvXyLqT3pQf2W`）、index.html 已重建為單一資料驅動文件（損壞現場備份在 `.claude/backups/20260705-index-corrupted.html`）。以下保留原始診斷供理解背景；「修法」中的規則仍然有效。
 
 ## D1｜冷啟動無記憶（最大的 token 漏損與錯誤來源）
 

@@ -5,7 +5,7 @@
 
 ## §1 第一件事：把「每週五自動更新」變成真的
 
-> **已完成 2026-07-05**：trigger `trig_01K6j1UtHCWKPitUDVxABw6U` 已建立（cron `0 12 * * 5`，伺服器 UTC＝台灣週五 20:00，fresh-session 模式，實際使用的 prompt 即下方範本）。meta 描述已同步修正為 WebSearch。以下保留設計說明：若 trigger 需要重建或調整，照此做。
+> **已完成 2026-07-05**：trigger `trig_01ErnJ4TnKhxvXyLqT3pQf2W` 已建立（cron `0 12 * * 5`，伺服器 UTC＝台灣週五 20:00，fresh-session 模式，實際使用的 prompt 即下方範本）。meta 描述已同步修正為 WebSearch。以下保留設計說明：若 trigger 需要重建或調整，照此做。
 
 **前置條件：先完成 §2 的檔案修復**——在損壞的檔案上跑排程只會疊加損壞。
 **資料來源以頁面實際文案為準（WebSearch 全網搜尋，見 `00-diagnosis.md` D1）**。
@@ -75,7 +75,7 @@ Fallback 規則（無人值守，問不到人時一律適用）：
 
 這套檔案只存在於本 repo；本雲端環境的 `~/.claude/` 每次 session 都是新容器，寫在那裡不持久。新 repo 要用這套制度，照以下步驟移植（Sonnet 等級即可執行，約 10 分鐘）：
 
-0. 若你的 session 開在新 repo、看不到本 repo 的檔案：用 `mcp__Claude_Code_Remote__add_repo`（owner: `steve355681`, repo: `triathlon-radar`）把本 repo 加進 session 並照回傳指示 clone，即可讀到要複製的檔案。使用者只需要在新 repo 的 session 說一句「照 triathlon-radar 的制度移植」。
+0. 觸發語：使用者在新 repo 的 session 說「**照 system design session 的制度移植**」。你（該 session 的模型）照做：用 `mcp__Claude_Code_Remote__list_repos` 找名稱含 `system-design-session` 的 repo（找不到就找舊名 `triathlon-radar`），再用 `mcp__Claude_Code_Remote__add_repo`（owner: `steve355681`）把它加進 session 並照回傳指示 clone，即可讀到要複製的檔案，接著執行步驟 1–4。
 1. 複製通用檔到新 repo 同樣路徑：`.claude/guides/01-delegation.md`、`02-judgment.md`、`03-prompt-templates.md`、`04-maintenance.md`——這四份與專案無關，原樣照搬。
 2. **不要照搬**：`00-diagnosis.md`（診斷的是本 repo 的問題）、本檔（`05-…`）、`LESSONS.md`（教訓大多綁定本專案）。新 repo 各自重建：診斷用新 repo 的實況重寫；`LESSONS.md` 從空檔開始，只搬「環境事實」類條目（例如 Agent 工具沒有 effort 參數這種跨 repo 皆真的事）。
 3. 新寫該 repo 的 CLAUDE.md：沿用本 repo CLAUDE.md 的骨架（專案是什麼／硬規則／路由表／環境速查），但「專案是什麼」與「硬規則」必須換成新 repo 的實況——硬規則抄錯專案比沒有硬規則更糟。
