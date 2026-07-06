@@ -2,6 +2,11 @@
 
 > 格式與收錄標準見 `.claude/guides/04-maintenance.md` §3。新條目追加到檔尾。
 
+## 2026-07-06 repo 改名為 system-design-session（GitHub 端由使用者執行）
+情境：使用者要求讓「照 system design session 的制度移植」一句話在新 repo 生效。
+教訓：GitHub MCP 沒有改名工具，`create_repository` 回 403（整合只授權本 repo）——repo 層級操作要請使用者在 GitHub Settings 做。改名後 git remote 自動轉址、舊名連結仍可用；但每週 trigger 的環境綁定是否存活，需在改名後第一個週五驗證：雷達沒更新的話，請使用者到 Claude Code 環境設定重新連結 repo。trigger prompt 已改寫為不依賴 repo 名稱。
+證據：`create_repository` 回 `403 Resource not accessible by integration`；trigger 重建見下一條的 id 更新。
+
 ## 2026-07-05 Agent 工具沒有 per-call effort 參數
 情境：建立模型調度守則時實測 Agent 工具 schema。
 教訓：委派時只能指定 `model`（haiku/sonnet/opus/fable），不能指定 reasoning effort；effort 只能寫在 `.claude/agents/<名字>.md` 的 frontmatter。不要在派工 prompt 裡浪費字要求「用高 effort」。
@@ -29,5 +34,5 @@
 
 ## 2026-07-05 每週自動更新已建立（原本從未排程）
 情境：盤點時發現 meta 宣稱的自動更新不存在（`list_triggers` 回傳 `{}`），同日建立。
-教訓：trigger `trig_01K6j1UtHCWKPitUDVxABw6U`，cron `0 12 * * 5`（伺服器 UTC，＝台灣週五 20:00），fresh-session 模式，push 通知開啟。調整或重建照 05-letter §1。伺服器時區實測為 UTC（`date +%z` 回 `+0000`），排 cron 前一律先實測。
-證據：create_trigger 回傳，next_run_at 2026-07-10T12:04Z。
+教訓：trigger `trig_01ErnJ4TnKhxvXyLqT3pQf2W`（2026-07-06 因 repo 改名重建，prompt 已改為不依賴 repo 名稱；原 trig_01K6j1UtHCWKPitUDVxABw6U 已刪除），cron `0 12 * * 5`（伺服器 UTC，＝台灣週五 20:00），fresh-session 模式，push 通知開啟。調整或重建照 05-letter §1。注意 `update_trigger` 改不了 prompt，要改 prompt 只能刪除重建。伺服器時區實測為 UTC（`date +%z` 回 `+0000`），排 cron 前一律先實測。
+證據：create_trigger 回傳，next_run_at 2026-07-10T12:08Z。
